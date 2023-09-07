@@ -2,8 +2,7 @@
     <div>
       <v-layout>
         <v-navigation-drawer
-          expand-on-hover
-          rail
+          
           style="z-index: 1000;"
         >
           <v-list>
