@@ -1,8 +1,8 @@
 <template>
     <v-data-table
       :headers="headers"
-      :items="desserts"
-      :sort-by="[{ key: 'calories', order: 'asc' }]"
+      :items="posts"
+      :sort-by="[{ key: 'Autores', order: 'asc' }]"
       class="elevation-1"
     >
       <template v-slot:top>
@@ -37,57 +37,20 @@
   
               <v-card-text>
                 <v-container>
-                  <v-row>
-                    <v-col
-                      cols="12"
-                      sm="6"
-                      md="4"
-                    >
-                      <v-text-field
-                        v-model="editedItem.name"
-                        label="Dessert name"
-                      ></v-text-field>
+                    <v-row v-for="(userPost, index) in userPosts" :key="index">
+                    <v-col cols="4">
+                        <h2>Título del Post</h2>
+                        <p>{{ userPost.title }}</p>
                     </v-col>
-                    <v-col
-                      cols="12"
-                      sm="6"
-                      md="4"
-                    >
-                      <v-text-field
-                        v-model="editedItem.calories"
-                        label="Calories"
-                      ></v-text-field>
+                    <v-col cols="4">
+                        <h2>Contenido del Post</h2>
+                        <p>{{ userPost.body }}</p>
                     </v-col>
-                    <v-col
-                      cols="12"
-                      sm="6"
-                      md="4"
-                    >
-                      <v-text-field
-                        v-model="editedItem.fat"
-                        label="Fat (g)"
-                      ></v-text-field>
+                    <v-col cols="4">
+                        <h2>Nombre de Usuario</h2>
+                        <p>{{ userPost.userName }}</p>
                     </v-col>
-                    <v-col
-                      cols="12"
-                      sm="6"
-                      md="4"
-                    >
-                      <v-text-field
-                        v-model="editedItem.carbs"
-                        label="Carbs (g)"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col
-                      cols="12"
-                      sm="6"
-                      md="4"
-                    >
-                      <v-text-field
-                        v-model="editedItem.protein"
-                        label="Protein (g)"
-                      ></v-text-field>
-                    </v-col>
+
                   </v-row>
                 </v-container>
               </v-card-text>
@@ -149,178 +112,64 @@
       </template>
     </v-data-table>
   </template>
+
+
   <script>
-    export default {
-      data: () => ({
+ export default {
+    data() {
+      return {
+        users: [],
+        posts: [],
+        userPosts: [], // Lista combinada de datos de usuarios y publicaciones
         dialog: false,
-        dialogDelete: false,
-        headers: [
-          {
-            title: 'Dessert (100g serving)',
-            align: 'start',
-            sortable: false,
-            key: 'name',
-          },
-          { title: 'Calories', key: 'calories' },
-          { title: 'Fat (g)', key: 'fat' },
-          { title: 'Carbs (g)', key: 'carbs' },
-          { title: 'Protein (g)', key: 'protein' },
-          { title: 'Actions', key: 'actions', sortable: false },
-        ],
-        desserts: [],
-        editedIndex: -1,
-        editedItem: {
-          name: '',
-          calories: 0,
-          fat: 0,
-          carbs: 0,
-          protein: 0,
+      dialogDelete: false,
+      headers: [
+        {
+          title: 'Autores',
+          align: 'start',
+          sortable: false,
+          key: 'usersPost',
         },
-        defaultItem: {
-          name: '',
-          calories: 0,
-          fat: 0,
-          carbs: 0,
-          protein: 0,
-        },
-      }),
-  
-      computed: {
-        formTitle () {
-          return this.editedIndex === -1 ? 'New Item' : 'Edit Item'
-        },
+        { title: 'Titulo', key: 'title' },
+        { title: 'Post', key: 'body' },
+        { title: 'Actions', key: 'actions', sortable: false },
+      ],
+        };
+    },
+    created() {
+      this.fetchUsers();
+      this.fetchPosts();
+    },
+    methods: {
+      async fetchUsers() {
+        try {
+          const response = await fetch('https://jsonplaceholder.typicode.com/users');
+          const data = await response.json();
+          this.users = data;
+          this.combineUserData();
+        } catch (error) {
+          console.error('Error al obtener datos de usuarios:', error);
+        }
       },
-  
-      watch: {
-        dialog (val) {
-          val || this.close()
-        },
-        dialogDelete (val) {
-          val || this.closeDelete()
-        },
+      async fetchPosts() {
+        try {
+          const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+          const data = await response.json();
+          this.posts = data;
+          this.combineUserData();
+        } catch (error) {
+          console.error('Error al obtener datos de publicaciones:', error);
+        }
       },
-  
-      created () {
-        this.initialize()
+      combineUserData() {
+        // Combinar los datos de usuarios y publicaciones
+        this.userPosts = this.users.map((user, index) => ({
+          userName: user.name,
+          title: this.posts[index] ? this.posts[index].title : '',
+          body: this.posts[index] ? this.posts[index].body : '',
+        }));
       },
-  
-      methods: {
-        initialize () {
-          this.desserts = [
-            {
-              name: 'Frozen Yogurt',
-              calories: 159,
-              fat: 6.0,
-              carbs: 24,
-              protein: 4.0,
-            },
-            {
-              name: 'Ice cream sandwich',
-              calories: 237,
-              fat: 9.0,
-              carbs: 37,
-              protein: 4.3,
-            },
-            {
-              name: 'Eclair',
-              calories: 262,
-              fat: 16.0,
-              carbs: 23,
-              protein: 6.0,
-            },
-            {
-              name: 'Cupcake',
-              calories: 305,
-              fat: 3.7,
-              carbs: 67,
-              protein: 4.3,
-            },
-            {
-              name: 'Gingerbread',
-              calories: 356,
-              fat: 16.0,
-              carbs: 49,
-              protein: 3.9,
-            },
-            {
-              name: 'Jelly bean',
-              calories: 375,
-              fat: 0.0,
-              carbs: 94,
-              protein: 0.0,
-            },
-            {
-              name: 'Lollipop',
-              calories: 392,
-              fat: 0.2,
-              carbs: 98,
-              protein: 0,
-            },
-            {
-              name: 'Honeycomb',
-              calories: 408,
-              fat: 3.2,
-              carbs: 87,
-              protein: 6.5,
-            },
-            {
-              name: 'Donut',
-              calories: 452,
-              fat: 25.0,
-              carbs: 51,
-              protein: 4.9,
-            },
-            {
-              name: 'KitKat',
-              calories: 518,
-              fat: 26.0,
-              carbs: 65,
-              protein: 7,
-            },
-          ]
-        },
-  
-        editItem (item) {
-          this.editedIndex = this.desserts.indexOf(item)
-          this.editedItem = Object.assign({}, item)
-          this.dialog = true
-        },
-  
-        deleteItem (item) {
-          this.editedIndex = this.desserts.indexOf(item)
-          this.editedItem = Object.assign({}, item)
-          this.dialogDelete = true
-        },
-  
-        deleteItemConfirm () {
-          this.desserts.splice(this.editedIndex, 1)
-          this.closeDelete()
-        },
-  
-        close () {
-          this.dialog = false
-          this.$nextTick(() => {
-            this.editedItem = Object.assign({}, this.defaultItem)
-            this.editedIndex = -1
-          })
-        },
-  
-        closeDelete () {
-          this.dialogDelete = false
-          this.$nextTick(() => {
-            this.editedItem = Object.assign({}, this.defaultItem)
-            this.editedIndex = -1
-          })
-        },
-  
-        save () {
-          if (this.editedIndex > -1) {
-            Object.assign(this.desserts[this.editedIndex], this.editedItem)
-          } else {
-            this.desserts.push(this.editedItem)
-          }
-          this.close()
-        },
-      },
-    }
+    },
+  };
   </script>
+  
